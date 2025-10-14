@@ -1,0 +1,112 @@
+--// Persistent GUI Script with Close Button and Reopen Key
+--// Works on most executors (Synapse, Krnl, Fluxus, etc.)
+
+-- Configuration
+local GUI_NAME = "UiLib"
+local REOPEN_KEY = Enum.KeyCode.RightControl
+
+-- Remove old GUI if exists
+if game.CoreGui:FindFirstChild(GUI_NAME) then
+	game.CoreGui[GUI_NAME]:Destroy()
+end
+
+-- Create ScreenGui
+local UiLib = Instance.new("ScreenGui")
+UiLib.Name = GUI_NAME
+UiLib.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+UiLib.ResetOnSpawn = false
+
+-- Try to protect GUI (if executor supports it)
+pcall(function()
+	if syn and syn.protect_gui then
+		syn.protect_gui(UiLib)
+	elseif protectgui then
+		protectgui(UiLib)
+	end
+end)
+
+-- Parent to CoreGui or PlayerGui
+local parented = false
+pcall(function()
+	UiLib.Parent = game.CoreGui
+	parented = true
+end)
+if not parented then
+	UiLib.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+--// Create the main frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 400, 0, 250)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = UiLib
+
+-- Top bar
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+-- Title text
+local Title = Instance.new("TextLabel")
+Title.Parent = TopBar
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Executor GUI"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+
+-- Close button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Parent = TopBar
+CloseButton.Size = UDim2.new(0, 35, 0, 35)
+CloseButton.Position = UDim2.new(1, -40, 0, 3)
+CloseButton.BackgroundTransparency = 1
+CloseButton.Text = "✕"
+CloseButton.TextColor3 = Color3.fromRGB(200, 80, 80)
+CloseButton.TextScaled = true
+CloseButton.ZIndex = 6
+CloseButton.Font = Enum.Font.GothamBold
+
+--// Content Example
+local TextLabel = Instance.new("TextLabel")
+TextLabel.Parent = MainFrame
+TextLabel.Size = UDim2.new(1, 0, 1, -40)
+TextLabel.Position = UDim2.new(0, 0, 0, 40)
+TextLabel.BackgroundTransparency = 1
+TextLabel.Text = "Your GUI Content Here"
+TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.Font = Enum.Font.SourceSansBold
+TextLabel.TextSize = 20
+
+-- Close function
+local isVisible = true
+CloseButton.MouseButton1Click:Connect(function()
+	isVisible = false
+	UiLib.Enabled = false
+end)
+
+-- Toggle with key (RightControl)
+game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+	if not processed and input.KeyCode == REOPEN_KEY then
+		isVisible = not isVisible
+		UiLib.Enabled = isVisible
+	end
+end)
+
+--// Reattach GUI after reset
+local player = game.Players.LocalPlayer
+player.CharacterAdded:Connect(function()
+	task.wait(1)
+	if not UiLib.Parent then
+		UiLib.Parent = game.CoreGui or player:WaitForChild("PlayerGui")
+	end
+end)
